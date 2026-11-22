@@ -5,6 +5,7 @@ namespace App\Http;
 class Router
 {
     protected array $routes = [];
+    protected array $groupMiddlewares = [];
 
     public function get(string $path, mixed $handler, array $middlewares = []): void
     {
@@ -30,8 +31,19 @@ class Router
     {
         $this->routes[strtoupper($method)][$this->normalize($path)] = [
             'handler' => $handler,
-            'middlewares' => $middlewares,
+            'middlewares' => array_merge($this->groupMiddlewares, $middlewares),
         ];
+    }
+
+    public function group(array $options, callable $callback): void
+    {
+        $previous = $this->groupMiddlewares;
+
+        $this->groupMiddlewares = array_merge($previous, $options['middlewares'] ?? []);
+
+        $callback($this);
+
+        $this->groupMiddlewares = $previous;
     }
 
     public function init(Request $request): void

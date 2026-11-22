@@ -7,4 +7,6 @@ use App\Middlewares\AuthMiddleware;
 $router->post('/login', [AuthController::class, 'login']);
 $router->post('/register', [UserController::class, 'create']);
 
-$router->post('/logout', [AuthController::class, 'logout'], [AuthMiddleware::class]);
+$router->group(['middlewares' => [AuthMiddleware::class]], function ($router) {
+    $router->post('/logout', [AuthController::class, 'logout']);
+});
