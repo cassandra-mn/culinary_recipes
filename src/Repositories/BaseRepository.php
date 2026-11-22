@@ -12,6 +12,7 @@ abstract class BaseRepository
     protected PDO $db;
 
     abstract public function table(): string;
+    abstract protected function fillable(): array;
 
     public function __construct()
     {
@@ -26,6 +27,22 @@ abstract class BaseRepository
             return $this->db
                 ->query($statement)
                 ->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception(
+                "Erro ao buscar os registros de {$this->table()}: " . $e->getMessage()
+            );
+        }
+    }
+
+    public function findAllByUser(int $userId)
+    {
+        try {
+            $statement = "SELECT * FROM {$this->table()} WHERE user_id = ?";
+
+            $query = $this->db->prepare($statement);
+            $query->execute([$userId]);
+
+            return $query->fetchAll(PDO::FETCH_ASSOC) ?: null;
         } catch (PDOException $e) {
             throw new Exception(
                 "Erro ao buscar os registros de {$this->table()}: " . $e->getMessage()
@@ -64,6 +81,40 @@ abstract class BaseRepository
         } catch (PDOException $e) {
             throw new Exception(
                 "Erro ao inserir registro em {$this->table()}."
+            );
+        }
+    }
+
+    public function update(array $data, int $id): int|false
+    {
+        try {
+            $data = array_intersect_key($data, array_flip($this->fillable()));
+            $set = implode(', ', array_map(fn ($c) => "`$c` = :$c", array_keys($data)));
+
+            $statement = "UPDATE {$this->table()} SET $set WHERE id = :id";
+
+            $query = $this->db->prepare($statement);
+            $result = $query->execute($data + ['id' => $id]);
+
+            return $result ? $this->db->lastInsertId() : false;
+        } catch (PDOException $e) {
+            throw new Exception(
+                "Erro ao inserir registro em {$this->table()}."
+            );
+        }
+    }
+
+    public function delete(int $id): bool
+    {
+        try {
+            $statement = "DELETE FROM {$this->table()} WHERE id = ?";
+
+            $query = $this->db->prepare($statement);
+
+            return $query->execute([$id]);
+        } catch (PDOException $e) {
+            throw new Exception(
+                "Erro ao deletar registro em {$this->table()}."
             );
         }
     }

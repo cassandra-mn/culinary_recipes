@@ -9,6 +9,11 @@ class RevokedTokenRepository extends BaseRepository
         return 'revoked_tokens';
     }
 
+    public function fillable(): array
+    {
+        return [];
+    }
+
     public function create(array $data): int|false
     {
         return $this->insert([

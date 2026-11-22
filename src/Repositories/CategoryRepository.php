@@ -11,6 +11,13 @@ class CategoryRepository extends BaseRepository
         return 'categories';
     }
 
+    public function fillable(): array
+    {
+        return [
+            'name'
+        ];
+    }
+
     public function getAll(): array
     {
         return array_map(

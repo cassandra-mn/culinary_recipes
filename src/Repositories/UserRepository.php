@@ -11,6 +11,17 @@ class UserRepository extends BaseRepository
         return 'users';
     }
 
+    public function fillable(): array
+    {
+        return [
+            'name',
+            'login',
+            'password',
+            'created_at',
+            'updated_at',
+        ];
+    }
+
     public function create(UserEntity $user): int|false
     {
         return $this->insert([

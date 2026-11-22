@@ -10,6 +10,7 @@ class Request
     private array $json;
     private array $headers;
     private ?int $userId;
+    private array $params = [];
 
     public function __construct()
     {
@@ -38,6 +39,16 @@ class Request
     public function header(string $key): ?string
     {
         return $this->headers[$key] ?? null;
+    }
+
+    public function setParams(array $params): void
+    {
+        $this->params = $params;
+    }
+
+    public function param(string $key): ?string
+    {
+        return $this->params[$key] ?? null;
     }
 
     public function bearerToken(): ?string

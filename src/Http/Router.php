@@ -22,6 +22,11 @@ class Router
         $this->make('PUT', $path, $handler, $middlewares);
     }
 
+    public function patch(string $path, mixed $handler, array $middlewares = []): void
+    {
+        $this->make('PATCH', $path, $handler, $middlewares);
+    }
+
     public function delete(string $path, mixed $handler, array $middlewares = []): void
     {
         $this->make('DELETE', $path, $handler, $middlewares);
@@ -50,22 +55,21 @@ class Router
     {
         header('Content-Type: application/json; charset=utf-8');
 
-        $httpMethod = $_SERVER['REQUEST_METHOD'];
         $path = $this->normalize(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/');
+        $found = $this->match($request->method(), $path);
 
-        $route = $this->routes[$httpMethod][$path] ?? null;
-        $handler = $route['handler'] ?? null;
-        $middlewares = $route['middlewares'] ?? [];
-
-        if ($handler === null) {
+        if ($found === null) {
             http_response_code(404);
             echo json_encode(['error' => 'Rota não encontrada']);
             exit;
         }
 
-        $next = fn (Request $request) => $this->call($handler, $request);
+        $route = $found['route'];
+        $request->setParams($found['params']);
 
-        foreach (array_reverse($middlewares) as $middlewareClass) {
+        $next = fn (Request $request) => $this->call($route['handler'], $request);
+
+        foreach (array_reverse($route['middlewares'] ?? []) as $middlewareClass) {
             $next = fn (Request $request) => (new $middlewareClass())->handle($request, $next);
         }
 
@@ -101,5 +105,20 @@ class Router
     private function normalize(string $path): string
     {
         return rtrim($path, '/') ?: '/';
+    }
+
+    private function match(string $method, string $path): ?array
+    {
+        foreach ($this->routes[$method] ?? [] as $pattern => $route) {
+            $regex = '#^' . preg_replace('#\{(\w+)}#', '(?P<$1>[^/]+)', $pattern) . '$#';
+
+            if (preg_match($regex, $path, $matches)) {
+                $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
+
+                return ['route' => $route, 'params' => $params];
+            }
+        }
+
+        return null;
     }
 }
