@@ -6,29 +6,32 @@ class Router
 {
     protected array $routes = [];
 
-    public function get(string $path, $handler): void
+    public function get(string $path, mixed $handler, array $middlewares = []): void
     {
-        $this->make('GET', $path, $handler);
+        $this->make('GET', $path, $handler, $middlewares);
     }
 
-    public function post(string $path, $handler): void
+    public function post(string $path, mixed $handler, array $middlewares = []): void
     {
-        $this->make('POST', $path, $handler);
+        $this->make('POST', $path, $handler, $middlewares);
     }
 
-    public function put(string $path, $handler): void
+    public function put(string $path, mixed $handler, array $middlewares = []): void
     {
-        $this->make('PUT', $path, $handler);
+        $this->make('PUT', $path, $handler, $middlewares);
     }
 
-    public function delete(string $path, $handler): void
+    public function delete(string $path, mixed $handler, array $middlewares = []): void
     {
-        $this->make('DELETE', $path, $handler);
+        $this->make('DELETE', $path, $handler, $middlewares);
     }
 
-    public function make(string $method, string $path, $handler): void
+    public function make(string $method, string $path, mixed $handler, array $middlewares = []): void
     {
-        $this->routes[strtoupper($method)][$this->normalize($path)] = $handler;
+        $this->routes[strtoupper($method)][$this->normalize($path)] = [
+            'handler' => $handler,
+            'middlewares' => $middlewares,
+        ];
     }
 
     public function init(Request $request): void
@@ -38,7 +41,9 @@ class Router
         $httpMethod = $_SERVER['REQUEST_METHOD'];
         $path = $this->normalize(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/');
 
-        $handler = $this->routes[$httpMethod][$path] ?? null;
+        $route = $this->routes[$httpMethod][$path] ?? null;
+        $handler = $route['handler'] ?? null;
+        $middlewares = $route['middlewares'] ?? [];
 
         if ($handler === null) {
             http_response_code(404);
@@ -46,7 +51,14 @@ class Router
             exit;
         }
 
-        $this->call($handler, $request);
+        $next = fn (Request $request) => $this->call($handler, $request);
+
+        foreach (array_reverse($middlewares) as $middlewareClass) {
+            $next = fn (Request $request) => (new $middlewareClass())->handle($request, $next);
+        }
+
+        $response = $next($request);
+        $this->send($response);
     }
 
     private function call($handler, Request $request)

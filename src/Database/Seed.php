@@ -73,6 +73,13 @@ $statement = <<<SQL
     INSERT INTO `culinary_recipes`.`categories` (`id`, `name`) VALUES (12, 'Light');
     INSERT INTO `culinary_recipes`.`categories` (`id`, `name`) VALUES (13, 'Alimentação Saudável');
     
+    CREATE TABLE revoked_tokens (
+        jti VARCHAR(64) NOT NULL PRIMARY KEY,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME NOT NULL,
+        INDEX idx_revoked_expires (expires_at)
+    );
+
     COMMIT;
 SQL;
 

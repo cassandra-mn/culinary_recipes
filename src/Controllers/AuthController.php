@@ -7,6 +7,7 @@ use App\Exceptions\ValidationException;
 use App\Http\Request;
 use App\Http\Response;
 use App\Services\AuthService;
+use RuntimeException;
 use Throwable;
 
 class AuthController
@@ -33,9 +34,23 @@ class AuthController
             return Response::error($e->getMessage(), 401);
         } catch (ValidationException $e) {
             return Response::error($e->getMessage(), 422);
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage());
         } catch (Throwable $e) {
-            var_dump($e->getMessage());
             return Response::error('Erro ao realizar login.');
+        }
+    }
+
+    public function logout(Request $request): Response
+    {
+        try {
+            $token = $request->bearerToken();
+
+            $this->authService->logout($token);
+
+            return Response::success(null, 'Logout realizado com sucesso.');
+        } catch (Throwable $e) {
+            return Response::error('Erro ao realizar logout.');
         }
     }
 }

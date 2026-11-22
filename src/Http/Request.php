@@ -8,6 +8,8 @@ class Request
     private array $post;
     private array $server;
     private array $json;
+    private array $headers;
+    private ?int $userId;
 
     public function __construct()
     {
@@ -15,11 +17,34 @@ class Request
         $this->post = $_POST;
         $this->server = $_SERVER;
         $this->json = $this->parseJsonBody();
+        $this->headers = getallheaders();
     }
 
     public function method(): string
     {
         return strtoupper($this->server['REQUEST_METHOD'] ?? 'GET');
+    }
+
+    public function setUserId(string $userId): void
+    {
+        $this->userId = $userId;
+    }
+
+    public function getUserId(): ?int
+    {
+        return $this->userId;
+    }
+
+    public function header(string $key): ?string
+    {
+        return $this->headers[$key] ?? null;
+    }
+
+    public function bearerToken(): ?string
+    {
+        $bearer = $this->header('Authorization');
+
+        return $bearer ? trim(str_replace('Bearer', '', $bearer)) : null;
     }
 
     public function only(array $keys): array

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Exceptions\LoginDataException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use RuntimeException;
 
 class TokenService
 {
@@ -13,23 +13,26 @@ class TokenService
         $jwtSecret = $_ENV['JWT_SECRET'];
 
         if (!$jwtSecret || strlen($jwtSecret) < 32) {
-            throw new LoginDataException('JWT_SECRET não definido ou inválido.');
+            throw new RuntimeException('JWT_SECRET não definido ou inválido.');
         }
 
         return JWT::encode(self::generate($userId), $jwtSecret, 'HS256');
     }
 
-    private static function decode(string $jwt): array
+    public static function decode(string $jwt): array
     {
         return (array) JWT::decode($jwt, new Key($_ENV['JWT_SECRET'], 'HS256'));
     }
 
     private static function generate(int $userId): array
     {
+        $now = time();
+
         return [
             'sub' => $userId,
-            'iat' => time(),
-            'exp' => time() + (int) $_ENV['JWT_TTL']
+            'iat' => $now,
+            'exp' => $now + (int) $_ENV['JWT_TTL'],
+            'jti' => bin2hex(random_bytes(16))
         ];
     }
 }
