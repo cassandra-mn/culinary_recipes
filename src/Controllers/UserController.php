@@ -48,10 +48,7 @@ class UserController
                 $this->userService->getAll()
             );
 
-            return Response::success(
-                $users,
-                'Usuários encontrados com sucesso.'
-            );
+            return Response::success($users, 'Usuários encontrados com sucesso.');
         } catch (Throwable $e) {
             return Response::error('Erro ao buscar usuários.');
         }
