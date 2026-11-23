@@ -31,9 +31,9 @@ class RecipeController
                 'ingredients'
             ]);
 
-            $id = $this->recipeService->create($data, $request->getUserId());
+            $recipe = $this->recipeService->create($data, $request->getUserId());
 
-            return Response::success($id, 'Receita criada com sucesso.', 201);
+            return Response::success($recipe->toArray(), 'Receita criada com sucesso.', 201);
         } catch (ValidationException $e) {
             return Response::error($e->getMessage(), 422);
         } catch (Throwable $e) {
@@ -55,9 +55,9 @@ class RecipeController
                 'ingredients'
             ]);
 
-            $id = $this->recipeService->update($data, $id, $request->getUserId());
+            $recipe = $this->recipeService->update($data, $id, $request->getUserId());
 
-            return Response::success($id, 'Receita atualizada com sucesso.');
+            return Response::success($recipe->toArray(), 'Receita atualizada com sucesso.');
         } catch (NotFoundException $e) {
             return Response::error($e->getMessage(), 404);
         } catch (ValidationException $e) {

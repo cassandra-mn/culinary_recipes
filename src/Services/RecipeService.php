@@ -41,7 +41,7 @@ class RecipeService
             throw new Exception('Erro ao criar receita.');
         }
 
-        return $recipe;
+        return $recipe->setId($recipeId);
     }
 
     public function update(array $data, int $id, int $userId): RecipeEntity
