@@ -18,7 +18,7 @@ class Request
         $this->post = $_POST;
         $this->server = $_SERVER;
         $this->json = $this->parseJsonBody();
-        $this->headers = getallheaders();
+        $this->headers = array_change_key_case(getallheaders());
     }
 
     public function method(): string
@@ -38,7 +38,7 @@ class Request
 
     public function header(string $key): ?string
     {
-        return $this->headers[$key] ?? null;
+        return $this->headers[strtolower($key)] ?? null;
     }
 
     public function setParams(array $params): void
