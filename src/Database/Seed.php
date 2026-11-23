@@ -104,4 +104,5 @@ try {
     }
 
     echo 'Erro ao criar database e tabelas: ' . $e->getMessage();
+    exit(1);
 }

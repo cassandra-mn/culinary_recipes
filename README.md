@@ -7,15 +7,90 @@ O projeto é dividido em duas partes:
 - **API:** PHP puro (sem framework), com MySQL e autenticação via JWT - fica na raiz do repositório.
 - **Front-end:** Vue 3 + TypeScript + Vite - na pasta `frontend`.
 
-## Pré-requisitos
+Há duas formas de rodar o projeto: [com Docker](#rodando-com-docker) (sobe MySQL, API e front-end com um comando) ou [manualmente](#rodando-manualmente).
 
-- PHP 8.0 ou superior, com a extensão `pdo_mysql`
+## Rodando com Docker
+
+### Pré-requisitos
+
+- [Docker](https://docs.docker.com/get-docker/) com o Docker Compose
+
+### Passo a passo
+
+1. Clone o repositório
+
+```sh
+git clone git@github.com:cassandra-mn/culinary_recipes.git
+cd culinary_recipes
+```
+
+2. Crie o arquivo de ambiente
+
+```sh
+cp .env.example .env
+```
+
+3. Preencha o `.env`
+
+```
+DB_DATABASE=culinary_recipes
+DB_USERNAME=root
+DB_PASSWORD=root
+
+JWT_SECRET=uma_chave_com_no_minimo_32_caracteres
+JWT_TTL=3600
+```
+
+- `DB_USERNAME` e `DB_PASSWORD` precisam ser `root` e `root`, que são as credenciais do MySQL criado pelo `docker-compose.yaml`.
+- `DB_HOST` e `DB_PORT` podem ficar como estão: dentro do Docker, o `DB_HOST` é sobrescrito para o container `mysql`.
+- `JWT_SECRET` precisa ter pelo menos 32 caracteres. Para gerar uma:
+
+```sh
+openssl rand -hex 32
+```
+
+4. Suba os containers
+
+```sh
+docker compose up -d --build
+```
+
+Isso sobe três containers:
+
+| Serviço | Endereço | Descrição |
+| ------- | -------- | --------- |
+| `frontend` | `http://localhost:5173` | Front-end (Vite) |
+| `api` | `http://localhost:8000` | API em PHP + Apache |
+| `mysql` | `localhost:3306` | MySQL 8.4 (usuário `root`, senha `root`) |
+
+O banco, as tabelas e as categorias iniciais são criados automaticamente quando o container da API inicia, então não é preciso rodar o seed.
+
+Na primeira vez, o container do front-end instala as dependências (`npm install`) antes de subir e pode demorar alguns instantes. Para acompanhar:
+
+```sh
+docker compose logs -f frontend
+```
+
+Como não existe usuário padrão, acesse `http://localhost:5173/register`, crie sua conta e depois faça login.
+
+### Comandos úteis
+
+```sh
+docker compose logs -f api   # logs da API
+docker compose down          # para e remove os containers (os dados do banco são mantidos)
+docker compose down -v       # também apaga o volume com os dados do MySQL
+```
+
+## Rodando manualmente
+
+### Pré-requisitos
+
+- PHP 8.0 ou superior
 - [Composer](https://getcomposer.org/)
 - MySQL 8 rodando
 - Node.js `^22.18.0` ou `>=24.12.0` e npm
 
-
-## Instalação
+### Instalação
 
 1. Clone o repositório
 
@@ -65,12 +140,6 @@ php src/Database/Seed.php
 
 O script cria o banco informado em `DB_DATABASE` se ele ainda não existir, mas o usuário do `.env` precisa ter permissão de `CREATE` no MySQL.
 
-> Se preferir, o `docker-compose.yaml` sobe um MySQL já com o banco `culinary_recipes` criado (usuário `root`, senha `root`). Nesse caso, use essas credenciais no `.env` (passo 4) e suba o container antes do passo 5:
->
-> ```sh
-> docker compose up -d
-> ```
-
 6. Suba a API
 
 ```sh
@@ -79,7 +148,7 @@ php -S localhost:8000 -t public public/index.php
 
 A API fica disponível em `http://localhost:8000`.
 
-## Configuração do front-end
+### Configuração do front-end
 
 1. Em outro terminal, entre na pasta do front-end
 
