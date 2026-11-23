@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.ts';
 import * as recipeService from '@/services/recipeService.ts';
+import { EyeIcon, TrashIcon, PencilIcon } from '@heroicons/vue/24/outline';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -59,18 +60,36 @@ async function handleLogout() {
 
 <template>
   <section class="auth">
-    <h1>Receitas</h1>
-    <p><RouterLink :to="{ name: 'recipes-create' }">Adicionar receita</RouterLink></p>
+    <div class="d-flex">
+      <h1>Receitas</h1>
+      <button @click.prevent="handleLogout">Sair</button>
+    </div>
+    <button type="button">
+      <RouterLink :to="{ name: 'recipes-create' }">
+        <p class="text-fff m-0">Adicionar receita</p>
+      </RouterLink>
+    </button>
     <input v-model="search" type="search" placeholder="Buscar receita pelo nome" />
-    <button @click.prevent="handleLogout">Sair</button>
     <p v-if="loading">Carregando...</p>
     <p v-else-if="error">{{ error }}</p>
-    <ul v-else>
-      <li v-for="recipe in filteredRecipes" :key="recipe.id">
-        {{ recipe.name }}
-        <RouterLink :to="{ name: 'recipe-detail', params: { id: recipe.id } }" title="Ver">👁️</RouterLink>
-        <RouterLink :to="{ name: 'recipe-edit', params: { id: recipe.id } }" title="Editar">✏️</RouterLink>
-        <button type="button" @click="handleDelete(recipe.id)" title="Excluir">Excluir</button>
+    <ul v-else class="text-fff px-1">
+      <li v-for="recipe in filteredRecipes" :key="recipe.id" class="d-flex">
+        <div class="d-flex">{{ recipe.name ?? '-' }}</div>
+        <div class="d-flex">
+          <RouterLink :to="{ name: 'recipe-detail', params: { id: recipe.id } }" title="Ver">
+            <button type="button" class="action">
+              <EyeIcon class="size-25 text-blue-500 icon" />
+            </button>
+          </RouterLink>
+          <RouterLink :to="{ name: 'recipe-edit', params: { id: recipe.id } }" title="Editar">
+            <button type="button" class="action">
+              <PencilIcon class="size-25 text-yellow-500 icon" />
+            </button>
+          </RouterLink>
+          <button type="button" class="action" @click="handleDelete(recipe.id)" title="Excluir">
+            <TrashIcon class="size-25 text-red-500 icon" />
+          </button>
+        </div>
       </li>
     </ul>
     <p v-if="!loading && !error && !filteredRecipes.length">Nenhuma receita encontrada.</p>
