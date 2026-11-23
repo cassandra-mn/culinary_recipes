@@ -36,21 +36,7 @@ composer install
 cp .env.example .env
 ```
 
-4. Crie o banco no MySQL local
-
-- A conexão já aponta para o banco, então ele precisa existir antes de rodar o script das tabelas:
-
-```sql
-CREATE DATABASE culinary_recipes CHARACTER SET utf8mb4;
-```
-
-> Se preferir, o `docker-compose.yaml` sobe um MySQL já com o banco `culinary_recipes` criado (usuário `root`, senha `root`). Nesse caso, use essas credenciais no `.env` e pule o passo 4.
->
-> ```sh
-> docker compose up -d
-> ```
-
-5. Preencha o `.env` com as credenciais do seu MySQL e com a chave do JWT
+4. Preencha o `.env` com as credenciais do seu MySQL e com a chave do JWT
 
 ```
 DB_HOST=127.0.0.1
@@ -71,13 +57,21 @@ php -r "echo bin2hex(random_bytes(32));"
 
 - `JWT_TTL` é o tempo de validade do token, em segundos.
 
-6. Crie as tabelas e as categorias iniciais
+5. Crie o banco, as tabelas e as categorias iniciais
 
 ```sh
 php src/Database/Seed.php
 ```
 
-7. Suba a API
+O script cria o banco informado em `DB_DATABASE` se ele ainda não existir, mas o usuário do `.env` precisa ter permissão de `CREATE` no MySQL.
+
+> Se preferir, o `docker-compose.yaml` sobe um MySQL já com o banco `culinary_recipes` criado (usuário `root`, senha `root`). Nesse caso, use essas credenciais no `.env` (passo 4) e suba o container antes do passo 5:
+>
+> ```sh
+> docker compose up -d
+> ```
+
+6. Suba a API
 
 ```sh
 php -S localhost:8000 -t public public/index.php
