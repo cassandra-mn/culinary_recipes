@@ -1,0 +1,343 @@
+openapi: 3.0.3
+
+info:
+  title: API de Receitas Culinárias
+  version: 1.0.0
+  description: |
+    API REST em PHP para gerenciamento de receitas culinárias.
+
+    ## Autenticação
+    As rotas marcadas com o cadeado exigem o header `Authorization: Bearer <token>`.
+
+    O token é obtido em `POST /login` e deixa de valer quando expira (`JWT_TTL`) ou após `POST /logout`.
+    
+    ## Formato das respostas
+    Todas as respostas seguem o mesmo padrão de retorno:
+
+    ```json
+    { "success": true, "data": ..., "message": "..." }
+    ```
+
+    Em caso de erro, `success` é `false` e `data` é `null`.
+
+servers:
+  - url: http://localhost:8000
+
+tags:
+  - name: Autenticação
+  - name: Categorias
+  - name: Receitas
+
+security:
+  - bearerAuth: [ ]
+
+paths:
+  /register:
+    post:
+      tags: [ Autenticação ]
+      summary: Cadastra um usuário
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Maria
+              login: maria
+              password: senha-forte-123
+      responses:
+        '201':
+          description: Usuário criado. `data` é o id do novo usuário.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        type: integer
+                        example: 1
+                      message:
+                        example: Usuário criado com sucesso.
+        '409':
+          description: Já existe um usuário com esse `login`.
+          content:
+            application/json:
+              example:
+                success: false
+                data: null
+                message: O login informado já está em uso.
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /login:
+    post:
+      tags: [ Autenticação ]
+      summary: Autentica e devolve um token JWT
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              login: maria
+              password: senha-forte-123
+      responses:
+        '200':
+          description: Autenticado. No `data` é retornado o `token` e o objeto do usuário `user`.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        example: { token: string, user: {} }
+                      message:
+                        example: Usuário logado com sucesso.
+        '401':
+          description: Login ou senha incorretos. A mesma mensagem é usada para usuário inexistente e senha errada.
+          content:
+            application/json:
+              example:
+                success: false
+                data: null
+                message: Dados inválidos.
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /logout:
+    post:
+      tags: [ Autenticação ]
+      summary: Revoga o token usado na requisição
+      description: |
+        Depois do logout, o mesmo token passa a responder `401` em qualquer rota protegida
+        (inclusive em um segundo `POST /logout`). Outros tokens do mesmo usuário continuam válidos.
+      responses:
+        '200':
+          description: Token revogado.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+                        example: null
+                      message:
+                        example: Logout realizado com sucesso.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /categories:
+    get:
+      tags: [ Categorias ]
+      summary: Lista as categorias
+      description: As categorias são fixas (criadas pelo seed) e iguais para todos os usuários.
+      responses:
+        '200':
+          description: Lista de categorias.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        example: []
+                      message:
+                        example: Categorias encontradas com sucesso.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /recipes:
+    get:
+      tags: [ Receitas ]
+      summary: Lista as receitas do usuário autenticado
+      responses:
+        '200':
+          description: Receitas do usuário (lista vazia se ele não tiver nenhuma).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        example: []
+                      message:
+                        example: Receitas encontradas com sucesso.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [ Receitas ]
+      summary: Cria uma receita para o usuário autenticado
+      description: |
+        Só `preparation_method` é obrigatório. O `user_id` vem do token; se for enviado no corpo, é ignorado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Bolo de cenoura
+              category_id: 1
+              preparation_time: 45
+              preparation_method: Bata tudo no liquidificador e asse.
+              portions: 8
+              ingredients: cenoura, ovos, farinha, açúcar
+      responses:
+        '201':
+          description: Receita criada.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: Hoje sempre `{}` (limitação conhecida).
+                      message:
+                        example: Receita criada com sucesso.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /recipes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Id da receita.
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      tags: [ Receitas ]
+      summary: Detalha uma receita do usuário autenticado
+      responses:
+        '200':
+          description: A receita.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        example: {}
+                      message:
+                        example: Receita encontrada com sucesso.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/RecipeNotFound'
+    patch:
+      tags: [ Receitas ]
+      summary: Atualiza parcialmente uma receita
+      description: |
+        Só os campos enviados são alterados. Enviar `category_id: null` remove a categoria.
+        Os demais campos ausentes mantêm o valor atual. `user_id` e `created_at` não podem ser alterados.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Bolo de laranja
+              portions: 10
+      responses:
+        '200':
+          description: Receita atualizada.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: Hoje sempre `{}` (limitação conhecida).
+                      message:
+                        example: Receita atualizada com sucesso.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/RecipeNotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      tags: [ Receitas ]
+      summary: Exclui uma receita
+      responses:
+        '200':
+          description: Receita excluída.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+                        example: null
+                      message:
+                        example: Receita deletada com sucesso.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/RecipeNotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token retornado por `POST /login`.
+
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido, expirado ou revogado.
+      content:
+        application/json:
+          example:
+            success: false
+            data: null
+            message: Usuário não autenticado.
+    RecipeNotFound:
+      description: A receita não existe **ou** pertence a outro usuário.
+      content:
+        application/json:
+          example:
+            success: false
+            data: null
+            message: Receita não encontrada.
+    ValidationError:
+      description: Dados inválidos (campo obrigatório ausente ou acima do tamanho máximo).
+      content:
+        application/json:
+          example:
+            success: false
+            data: null
+            message: O campo "preparation_method" é obrigatório.
+    ServerError:
+      description: Erro interno. A mensagem é genérica para não expor detalhes.
+      content:
+        application/json:
+          example:
+            success: false
+            data: null
+            message: Erro ao criar receita.
