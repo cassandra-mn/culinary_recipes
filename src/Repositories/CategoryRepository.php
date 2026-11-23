@@ -25,4 +25,11 @@ class CategoryRepository extends BaseRepository
             $this->findAll()
         );
     }
+
+    public function getById(int $id): ?CategoryEntity
+    {
+        $rows = $this->findBy('id', $id);
+
+        return !empty($rows) ? CategoryEntity::fromArray($rows[0]) : null;
+    }
 }

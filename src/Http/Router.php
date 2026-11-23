@@ -60,7 +60,11 @@ class Router
 
         if ($found === null) {
             http_response_code(404);
-            echo json_encode(['error' => 'Rota não encontrada']);
+            echo json_encode([
+                'success' => false,
+                'data' => null,
+                'message' => 'Rota não encontrada'
+            ]);
             exit;
         }
 

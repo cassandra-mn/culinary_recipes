@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Entities\RecipeEntity;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Repositories\CategoryRepository;
 use App\Repositories\RecipeRepository;
 use DateTimeImmutable;
 use Exception;
@@ -95,6 +96,10 @@ class RecipeService
     {
         if ($isCreate && empty($data['preparation_method'])) {
             throw new ValidationException('O campo "preparation_method" é obrigatório.');
+        }
+
+        if (isset($data['category_id']) && !(new CategoryRepository())->getById($data['category_id'])) {
+            throw new ValidationException('Categoria não encontrada.');
         }
 
         if (isset($data['name']) && mb_strlen($data['name']) > 45) {

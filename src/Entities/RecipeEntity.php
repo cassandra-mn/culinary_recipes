@@ -63,7 +63,7 @@ class RecipeEntity
         return $this->categoryId;
     }
 
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
