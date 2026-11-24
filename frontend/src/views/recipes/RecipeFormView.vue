@@ -91,6 +91,15 @@ async function handleSubmit() {
         <input v-model="form.name" type="text" maxlength="45" />
       </label>
       <label>
+        Categoria
+        <select v-model="form.category_id">
+          <option :value="null">Sem categoria</option>
+          <option v-for="category in categories" :key="category.id" :value="category.id">
+            {{ category.name }}
+          </option>
+        </select>
+      </label>
+      <label>
         Tempo de preparo (minutos)
         <input v-model="form.preparation_time" type="number" min="0" />
       </label>

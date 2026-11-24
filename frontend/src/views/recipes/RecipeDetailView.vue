@@ -6,6 +6,7 @@ import * as recipeService from '@/services/recipeService.ts';
 const route = useRoute();
 
 const recipe = ref<any>([]);
+const category = ref('');
 const loading = ref(false);
 const error = ref('');
 
@@ -17,6 +18,9 @@ onMounted(() => {
   async function getRecipe() {
     try {
       recipe.value = await recipeService.getRecipeById(recipeId.value);
+
+      const categories = await recipeService.getCategories();
+      category.value = categories.find(c => c.id === recipe.value.category_id)?.name ?? '-';
     } catch (e) {
       error.value = 'Erro ao buscar receita.';
     } finally {
@@ -36,6 +40,10 @@ onMounted(() => {
       <label>
         Nome
         <input v-model="recipe.name" type="text" maxlength="45" readonly />
+      </label>
+      <label>
+        Categoria
+        <input v-model="category" type="text" maxlength="45" readonly />
       </label>
       <label>
         Tempo de preparo (minutos)
