@@ -184,6 +184,19 @@ Para gerar a versão de produção:
 npm run build
 ```
 
+## Testes
+
+Os testes de integração sobem a API (`php -S` em uma porta livre), fazem requisições HTTP reais e conferem o banco.
+
+Precisam de PHP, das dependências de desenvolvimento (`composer install`) e de um MySQL acessível, com as mesmas variáveis `DB_HOST`, `DB_PORT`, `DB_USERNAME` e `DB_PASSWORD` do `.env`.
+
+```sh
+vendor/bin/phpunit --testsuite Integration
+```
+
+- Os testes usam um banco separado, `culinary_recipes_test`, criado automaticamente na primeira execução (tabelas e categorias do seed).
+- Para usar outro nome de banco, defina `DB_TEST_DATABASE`. O nome precisa terminar em `_test`, senão os testes se recusam a limpar o banco.
+- As tabelas `recipes`, `users` e `revoked_tokens` são limpas antes de cada teste.
 
 ## Rotas da API
 
